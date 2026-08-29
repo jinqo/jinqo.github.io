@@ -12,14 +12,18 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 });
 
+const siteUrl = process.env.GITHUB_PAGES === 'true'
+  ? 'https://jinqo.github.io'
+  : 'https://jinqo-portfolio.liampattiata.chatgpt.site';
+
 export const metadata: Metadata = {
-  metadataBase: new URL('https://jinqo-portfolio.liampattiata.chatgpt.site'),
+  metadataBase: new URL(siteUrl),
   title: 'jinqo — Developer Portfolio',
   description: 'jinqo builds useful software with Python, Node.js, and Java. Explore projects synced live from GitHub.',
   openGraph: {
     title: 'jinqo — Developer Portfolio',
     description: 'Python / Node.js / Java. Useful software, built in public.',
-    url: 'https://jinqo-portfolio.liampattiata.chatgpt.site',
+    url: siteUrl,
     siteName: 'jinqo',
     images: [{ url: '/og.png', width: 1200, height: 630, alt: 'JINQO — Python, Node.js, Java' }],
     type: 'website',

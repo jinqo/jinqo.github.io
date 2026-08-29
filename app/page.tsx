@@ -18,6 +18,14 @@ type Repo = {
   fork: boolean;
 };
 
+type Profile = {
+  public_repos: number;
+  followers: number;
+  following: number;
+};
+
+const fallbackProfile: Profile = { public_repos: 1, followers: 1, following: 2 };
+
 const fallbackRepos: Repo[] = [
   {
     id: 1,
@@ -38,25 +46,38 @@ const skills = [
   { label: 'Java', code: 'System.out.println("scale");', detail: 'Structured, dependable applications' },
 ];
 
+const projectSignals = [
+  { number: '01', title: 'Recruitment', detail: 'Role-based acceptance, secure invites, and a persistent application flow.' },
+  { number: '02', title: 'Verification', detail: 'Steam and BattleMetrics checks with automated risk signals.' },
+  { number: '03', title: 'Scheduling', detail: 'Timezone-aware wipe coordination with interactive responses.' },
+  { number: '04', title: 'Live systems', detail: 'Server status panels, durable state, and async-safe updates.' },
+];
+
 function formatDate(date: string) {
   return new Intl.DateTimeFormat('en', { month: 'short', year: 'numeric' }).format(new Date(date));
 }
 
 export default function Home() {
   const [repos, setRepos] = useState<Repo[]>(fallbackRepos);
+  const [profile, setProfile] = useState<Profile>(fallbackProfile);
   const [syncState, setSyncState] = useState<'loading' | 'live' | 'fallback'>('loading');
   const [activeSkill, setActiveSkill] = useState('All');
+  const [scrollProgress, setScrollProgress] = useState(0);
 
   useEffect(() => {
     const controller = new AbortController();
-    fetch(`https://api.github.com/users/${GITHUB_USER}/repos?sort=updated&per_page=100`, { signal: controller.signal })
-      .then((response) => {
-        if (!response.ok) throw new Error('GitHub request failed');
-        return response.json() as Promise<Repo[]>;
+    Promise.all([
+      fetch(`https://api.github.com/users/${GITHUB_USER}/repos?sort=updated&per_page=100`, { signal: controller.signal }),
+      fetch(`https://api.github.com/users/${GITHUB_USER}`, { signal: controller.signal }),
+    ])
+      .then(async ([reposResponse, profileResponse]) => {
+        if (!reposResponse.ok || !profileResponse.ok) throw new Error('GitHub request failed');
+        return [await reposResponse.json() as Repo[], await profileResponse.json() as Profile] as const;
       })
-      .then((data) => {
+      .then(([data, profileData]) => {
         const publicRepos = data.filter((repo) => !repo.fork);
         if (publicRepos.length) setRepos(publicRepos);
+        setProfile(profileData);
         setSyncState('live');
       })
       .catch((error: Error) => {
@@ -67,10 +88,27 @@ export default function Home() {
       document.documentElement.style.setProperty('--mouse-x', `${event.clientX}px`);
       document.documentElement.style.setProperty('--mouse-y', `${event.clientY}px`);
     };
+    const handleScroll = () => {
+      const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+      setScrollProgress(scrollable > 0 ? window.scrollY / scrollable : 0);
+    };
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: .14 });
+    document.querySelectorAll('[data-reveal]').forEach((element) => revealObserver.observe(element));
     window.addEventListener('pointermove', handlePointer, { passive: true });
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
     return () => {
       controller.abort();
       window.removeEventListener('pointermove', handlePointer);
+      window.removeEventListener('scroll', handleScroll);
+      revealObserver.disconnect();
     };
   }, []);
 
@@ -79,6 +117,8 @@ export default function Home() {
 
   return (
     <main id="top">
+      <a className="skip-link" href="#work">Skip to projects</a>
+      <div className="scroll-progress" style={{ transform: `scaleX(${scrollProgress})` }} aria-hidden="true" />
       <div className="ambient" aria-hidden="true" />
       <div className="grid-field" aria-hidden="true" />
 
@@ -115,7 +155,7 @@ export default function Home() {
           </div>
           <div className="identity-meta">
             <span>@{GITHUB_USER}</span>
-            <span>EU / REMOTE</span>
+            <span>{profile.followers} FOLLOWER{profile.followers === 1 ? '' : 'S'}</span>
           </div>
           <div className="code-note" aria-label="Developer motto">
             <span>01</span><code>while (idea) {'{'}</code>
@@ -134,19 +174,45 @@ export default function Home() {
         </div>
       </div>
 
-      <section className="manifesto shell" aria-label="About jinqo">
+      <section className="manifesto shell watch" aria-label="About jinqo" data-reveal>
         <p className="section-label">01 / ABOUT</p>
         <p className="manifesto-copy">I like software that does real work. <span>Clean interfaces.</span> Reliable systems. Automation that saves time. Every project is a chance to learn faster and ship something sharper.</p>
         <div className="stats-row">
-          <div><strong>{String(repos.length).padStart(2, '0')}</strong><span>PUBLIC PROJECTS</span></div>
+          <div><strong>{String(profile.public_repos).padStart(2, '0')}</strong><span>PUBLIC PROJECTS</span></div>
           <div><strong>03</strong><span>CORE STACKS</span></div>
           <div><strong>∞</strong><span>ITERATIONS</span></div>
         </div>
       </section>
 
-      <section className="work shell" id="work">
+      <section className="flagship shell watch" aria-label="Flagship project" data-reveal>
+        <div className="flagship-rail">
+          <p className="section-label">02 / FLAGSHIP BUILD</p>
+          <span>PYTHON / DISCORD / ASYNC</span>
+        </div>
+        <div className="flagship-intro">
+          <div>
+            <p className="flagship-kicker">A real tool for a real community</p>
+            <h2>Discord<br /><span>Rust Clan Bot</span></h2>
+          </div>
+          <div className="flagship-summary">
+            <p>A production-minded command center that connects two Discord servers, verifies players, coordinates wipes, and keeps clan operations moving.</p>
+            <a href="https://github.com/jinqo/discord-rust-clan-bot" target="_blank" rel="noreferrer">EXPLORE THE SOURCE <span>↗</span></a>
+          </div>
+        </div>
+        <div className="signal-grid">
+          {projectSignals.map((signal) => (
+            <article key={signal.number}>
+              <span>{signal.number}</span>
+              <h3>{signal.title}</h3>
+              <p>{signal.detail}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="work shell watch" id="work" data-reveal>
         <div className="section-head">
-          <div><p className="section-label">02 / GITHUB WORK</p><h2>Built in public.</h2></div>
+          <div><p className="section-label">03 / GITHUB WORK</p><h2>Built in public.</h2></div>
           <div className={`sync ${syncState}`}><span /> {syncState === 'loading' ? 'SYNCING GITHUB' : syncState === 'live' ? 'LIVE FROM GITHUB' : 'GITHUB SNAPSHOT'}</div>
         </div>
 
@@ -174,9 +240,9 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="stack shell" id="stack">
+      <section className="stack shell watch" id="stack" data-reveal>
         <div className="section-head">
-          <div><p className="section-label">03 / CAPABILITIES</p><h2>Tools I think in.</h2></div>
+          <div><p className="section-label">04 / CAPABILITIES</p><h2>Tools I think in.</h2></div>
           <p className="section-aside">Different languages. Same goal: build the right thing and make it solid.</p>
         </div>
         <div className="skill-grid">
@@ -192,9 +258,9 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="contact shell">
+      <section className="contact shell watch" data-reveal>
         <div className="contact-orbit" aria-hidden="true"><span /></div>
-        <p className="section-label">04 / NEXT PROJECT</p>
+        <p className="section-label">05 / NEXT PROJECT</p>
         <h2>Have an idea?<br /><span>Let’s make it real.</span></h2>
         <a className="cta cta-primary" href={PROFILE_URL} target="_blank" rel="noreferrer">FIND ME ON GITHUB <span>↗</span></a>
       </section>
