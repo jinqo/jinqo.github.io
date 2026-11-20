@@ -1,6 +1,6 @@
 # jinqo portfolio
 
-Animated developer portfolio with live public projects from `github.com/jinqo`.
+Security engineering & software portfolio: experience, projects with real status labels, categorized skills, learning, and live public repositories from `github.com/jinqo`.
 
 ## Publish at jinqo.github.io
 
