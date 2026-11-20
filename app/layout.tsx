@@ -18,20 +18,21 @@ const siteUrl = process.env.GITHUB_PAGES === 'true'
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: 'jinqo — Developer Portfolio',
-  description: 'jinqo builds useful software with Python, Node.js, and Java. Explore projects synced live from GitHub.',
+  title: 'jinqo — Developer & Security Portfolio',
+  description:
+    'jinqo builds useful software with Python, Node.js, and Java, and does authorized ethical hacking — in scope, under NDA, disclosed responsibly. Projects synced live from GitHub.',
   openGraph: {
-    title: 'jinqo — Developer Portfolio',
-    description: 'Python / Node.js / Java. Useful software, built in public.',
+    title: 'jinqo — Developer & Security Portfolio',
+    description: 'Development + authorized ethical hacking. Built in public, tested responsibly.',
     url: siteUrl,
     siteName: 'jinqo',
-    images: [{ url: '/og.png', width: 1200, height: 630, alt: 'JINQO — Python, Node.js, Java' }],
+    images: [{ url: '/og.png', width: 1200, height: 630, alt: 'JINQO — Development & Security Portfolio' }],
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'jinqo — Developer Portfolio',
-    description: 'Python / Node.js / Java. Useful software, built in public.',
+    title: 'jinqo — Developer & Security Portfolio',
+    description: 'Development + authorized ethical hacking. Built in public, tested responsibly.',
     images: ['/og.png'],
   },
 };
